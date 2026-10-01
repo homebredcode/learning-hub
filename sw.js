@@ -1,6 +1,9 @@
 // Network-first so new lessons show up as soon as you're online; cache is the offline fallback.
-const CACHE = "learning-hub-v1";
-const SHELL = ["./", "index.html", "styles.css", "app.js", "topics.json", "manifest.webmanifest", "icons/icon.svg"];
+const CACHE = "learning-hub-v2";
+const SHELL = [
+  "./", "index.html", "styles.css", "app.js", "topics.json", "manifest.webmanifest", "icons/icon.svg",
+  "fonts/bricolage-latin.woff2", "fonts/newsreader-latin.woff2", "fonts/newsreader-italic-latin.woff2",
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));

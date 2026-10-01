@@ -45,7 +45,7 @@
         i++;
       } else if (line.startsWith("?? ")) {
         const [q, a = ""] = line.slice(3).split("||");
-        out.push(`<details class="check"><summary>${inline(q.trim())}</summary><div class="answer">${inline(a.trim())}</div></details>`);
+        out.push(`<details class="check"><summary><span>${inline(q.trim())}</span></summary><div class="answer">${inline(a.trim())}</div></details>`);
         i++;
       } else if (line.startsWith("> ")) {
         const buf = [];
@@ -78,26 +78,67 @@
     ring.innerHTML = `<span>${pct}%</span>`;
   }
 
+  // Every "?? question || answer" across all lessons, fetched once per visit.
+  let questionPool = null;
+  let homeStamp = 0;
+  async function loadQuestions() {
+    if (questionPool) return questionPool;
+    const found = [];
+    await Promise.all(topics.flatMap((t) => t.lessons.map(async (l) => {
+      try {
+        const res = await fetch(`lessons/${t.id}/${l.file}`);
+        if (!res.ok) return;
+        for (const line of (await res.text()).replace(/\r/g, "").split("\n")) {
+          if (!line.startsWith("?? ")) continue;
+          const [q, a = ""] = line.slice(3).split("||");
+          found.push({ q: q.trim(), a: a.trim(), topic: t, lesson: l });
+        }
+      } catch {}
+    })));
+    questionPool = found;
+    return found;
+  }
+
+  async function showRecall(stamp, avoid) {
+    const pool = await loadQuestions();
+    const box = document.getElementById("recall");
+    if (!box || stamp !== homeStamp || !pool.length) return;
+    const choices = pool.length > 1 ? pool.filter((x) => x.q !== avoid) : pool;
+    const pick = choices[Math.floor(Math.random() * choices.length)];
+    box.innerHTML = `
+      <h1 class="q"><span class="mark">${inline(pick.q)}</span></h1>
+      <button class="btn auto" id="reveal" aria-expanded="false" aria-controls="answer">Show answer</button>
+      <div class="a" id="answer" hidden>${inline(pick.a)}</div>
+      <p class="src">From <a href="#/lesson/${pick.topic.id}/${pick.lesson.id}">${esc(pick.lesson.title)}</a>.
+        ${pool.length > 1 ? '<button class="link-btn" id="another">Another question</button>' : ""}</p>`;
+    const reveal = document.getElementById("reveal");
+    const answer = document.getElementById("answer");
+    reveal.onclick = () => {
+      answer.hidden = false;
+      reveal.hidden = true;
+    };
+    const another = document.getElementById("another");
+    if (another) another.onclick = () => showRecall(stamp, pick.q);
+  }
+
   function home() {
     const done = loadDone();
-    const cards = topics.map((t) => {
+    const rows = topics.map((t) => {
+      const pips = t.lessons.map((l) => `<i class="pip ${done.has(key(t.id, l.id)) ? "on" : ""}"></i>`).join("");
       const n = t.lessons.filter((l) => done.has(key(t.id, l.id))).length;
-      const pct = t.lessons.length ? (n / t.lessons.length) * 100 : 0;
-      return `<a class="card" href="#/topic/${t.id}">
-        <div class="emoji">${t.emoji || "📘"}</div>
-        <h3>${esc(t.title)}</h3>
+      return `<a class="topic-row" href="#/topic/${t.id}">
+        <h3><span>${esc(t.title)}</span></h3>
         <p>${esc(t.summary)}</p>
-        <div class="meta"><div class="bar"><i style="width:${pct}%"></i></div><span>${n}/${t.lessons.length}</span></div>
+        <div class="pips" role="img" aria-label="${n} of ${t.lessons.length} lessons complete">${pips}</div>
       </a>`;
     });
     app.innerHTML = `
-      <section class="hero">
-        <h1>Learn anything,<br><em>one step at a time.</em></h1>
-        <p>Your personal library of lessons. Pick a topic to continue.</p>
+      <section class="recall" id="recall">
+        <h1 class="empty-q">Pick a topic and start learning.</h1>
       </section>
-      <h2 class="section">Topics</h2>
-      <div class="grid topics">${cards.join("") || '<div class="empty">No topics yet.</div>'}</div>
+      <div class="index">${rows.join("") || '<div class="empty">No topics yet.</div>'}</div>
       <p class="footer-note">Progress is saved on this device.</p>`;
+    showRecall(++homeStamp);
   }
 
   function topicView(id) {
@@ -108,17 +149,15 @@
       const d = done.has(key(t.id, l.id));
       return `<a class="lesson-row ${d ? "done" : ""}" href="#/lesson/${t.id}/${l.id}">
         <span class="num">${d ? "✓" : i + 1}</span>
-        <span class="t">${esc(l.title)}<span class="m">${l.minutes} min read</span></span>
+        <span class="t"><span>${esc(l.title)}</span><span class="m">${l.minutes} min read</span></span>
       </a>`;
     });
     app.innerHTML = `
       <section class="hero">
-        <div class="emoji" style="font-size:2.4rem">${t.emoji || "📘"}</div>
         <h1>${esc(t.title)}</h1>
         <p>${esc(t.summary)}</p>
       </section>
-      <h2 class="section">Lessons</h2>
-      <div class="grid lessons">${rows.join("") || '<div class="empty">Lessons coming soon.</div>'}</div>`;
+      <div class="list">${rows.join("") || '<div class="empty">Lessons coming soon.</div>'}</div>`;
   }
 
   async function lessonView(tid, lid) {
@@ -147,10 +186,10 @@
       <div class="lesson-layout">
         <aside class="lesson-side"><h4>${esc(t.title)}</h4>${side.join("")}</aside>
         <div class="lesson-main">
-          <p class="crumb">${esc(t.title)} · Lesson ${idx + 1} of ${t.lessons.length}</p>
+          <p class="crumb"><a href="#/topic/${tid}">${esc(t.title)}</a>, lesson ${idx + 1} of ${t.lessons.length}</p>
           <article>${render(md)}</article>
-          <button class="btn ${isDone ? "secondary" : ""}" id="done">${isDone ? "Completed ✓ (click to undo)" : "Mark as complete"}</button>
-          ${next ? `<a class="next" href="#/lesson/${tid}/${next.id}">Next: ${esc(next.title)} →</a>` : `<a class="next" href="#/topic/${tid}">Back to ${esc(t.title)}</a>`}
+          <button class="btn ${isDone ? "secondary" : ""}" id="done">${isDone ? "Completed (tap to undo)" : "Mark as complete"}</button>
+          ${next ? `<a class="next" href="#/lesson/${tid}/${next.id}">Next: ${esc(next.title)}</a>` : `<a class="next" href="#/topic/${tid}">Back to ${esc(t.title)}</a>`}
         </div>
       </div>`;
     document.getElementById("done").onclick = () => {
