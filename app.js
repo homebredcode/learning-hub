@@ -96,7 +96,7 @@
         <p>Your personal library of lessons. Pick a topic to continue.</p>
       </section>
       <h2 class="section">Topics</h2>
-      <div class="grid">${cards.join("") || '<div class="empty">No topics yet.</div>'}</div>
+      <div class="grid topics">${cards.join("") || '<div class="empty">No topics yet.</div>'}</div>
       <p class="footer-note">Progress is saved on this device.</p>`;
   }
 
@@ -118,7 +118,7 @@
         <p>${esc(t.summary)}</p>
       </section>
       <h2 class="section">Lessons</h2>
-      <div class="grid">${rows.join("") || '<div class="empty">Lessons coming soon.</div>'}</div>`;
+      <div class="grid lessons">${rows.join("") || '<div class="empty">Lessons coming soon.</div>'}</div>`;
   }
 
   async function lessonView(tid, lid) {
@@ -139,11 +139,20 @@
     const done = loadDone();
     const isDone = done.has(key(tid, lid));
     const next = t.lessons[idx + 1];
+    const side = t.lessons.map((l, i) => {
+      const cls = [l.id === lid ? "current" : "", done.has(key(tid, l.id)) ? "done" : ""].join(" ");
+      return `<a class="${cls}" href="#/lesson/${tid}/${l.id}"><span class="n">${done.has(key(tid, l.id)) ? "✓" : i + 1}</span>${esc(l.title)}</a>`;
+    });
     app.innerHTML = `
-      <p class="crumb">${esc(t.title)} · Lesson ${idx + 1} of ${t.lessons.length}</p>
-      <article>${render(md)}</article>
-      <button class="btn ${isDone ? "secondary" : ""}" id="done">${isDone ? "Completed ✓ (tap to undo)" : "Mark as complete"}</button>
-      ${next ? `<a class="next" href="#/lesson/${tid}/${next.id}">Next: ${esc(next.title)} →</a>` : `<a class="next" href="#/topic/${tid}">Back to ${esc(t.title)}</a>`}`;
+      <div class="lesson-layout">
+        <aside class="lesson-side"><h4>${esc(t.title)}</h4>${side.join("")}</aside>
+        <div class="lesson-main">
+          <p class="crumb">${esc(t.title)} · Lesson ${idx + 1} of ${t.lessons.length}</p>
+          <article>${render(md)}</article>
+          <button class="btn ${isDone ? "secondary" : ""}" id="done">${isDone ? "Completed ✓ (click to undo)" : "Mark as complete"}</button>
+          ${next ? `<a class="next" href="#/lesson/${tid}/${next.id}">Next: ${esc(next.title)} →</a>` : `<a class="next" href="#/topic/${tid}">Back to ${esc(t.title)}</a>`}
+        </div>
+      </div>`;
     document.getElementById("done").onclick = () => {
       const s = loadDone();
       const k = key(tid, lid);

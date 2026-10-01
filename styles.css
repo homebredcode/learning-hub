@@ -39,13 +39,13 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 a { color: var(--accent); }
-main { max-width: 720px; margin: 0 auto; padding: 8px 20px 80px; outline: none; }
+main { max-width: 1080px; margin: 0 auto; padding: 8px 20px 80px; outline: none; }
 
 /* top bar */
 .topbar {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 8px;
-  padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
+  padding: calc(10px + env(safe-area-inset-top)) max(16px, calc((100% - 1080px) / 2 + 20px)) 10px;
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
@@ -143,3 +143,41 @@ details.check .answer { color: var(--text); }
 .btn:active { transform: scale(.985); }
 .next { display: block; text-align: center; margin-top: 16px; font-weight: 650; }
 .footer-note { text-align: center; color: var(--muted); font-size: .85rem; margin-top: 44px; }
+
+/* lesson layout: reading column, plus a lesson list beside it on wide screens */
+.lesson-layout { display: block; }
+.lesson-side { display: none; }
+.lesson-main { max-width: 720px; margin: 0 auto; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+
+@media (hover: hover) {
+  .card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 14px 40px rgba(60, 40, 160, .18); }
+  .lesson-row:hover { border-color: var(--accent); }
+  .btn:hover { filter: brightness(1.06); }
+}
+
+@media (min-width: 760px) {
+  body { font-size: 18px; }
+  main { padding-top: 24px; }
+  .hero { padding: 56px 0 20px; }
+  .grid.topics { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+  .grid.lessons { grid-template-columns: repeat(2, 1fr); }
+  .card { padding: 26px; }
+  .lesson-row { padding: 18px 20px; }
+}
+
+@media (min-width: 1040px) {
+  .lesson-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 56px; align-items: start; }
+  .lesson-main { margin: 0; }
+  .lesson-side { display: block; position: sticky; top: 88px; }
+  .lesson-side h4 { margin: 0 0 12px; font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+  .lesson-side a {
+    display: flex; gap: 10px; align-items: baseline; padding: 9px 12px; margin: 2px 0;
+    border-radius: 12px; text-decoration: none; color: var(--muted); font-size: .95rem; line-height: 1.35;
+  }
+  .lesson-side a:hover { background: var(--surface-2); color: var(--text); }
+  .lesson-side a.current { background: var(--surface-2); color: var(--text); font-weight: 700; }
+  .lesson-side a .n { flex: none; width: 1.3em; font-weight: 800; }
+  .lesson-side a.done .n { color: var(--good); }
+}
