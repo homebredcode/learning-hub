@@ -1,5 +1,5 @@
 // Network-first so new lessons show up as soon as you're online; cache is the offline fallback.
-const CACHE = "learning-hub-v3";
+const CACHE = "learning-hub-v4";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "topics.json", "manifest.webmanifest", "icons/icon.svg",
   "fonts/bricolage-latin.woff2", "fonts/newsreader-latin.woff2", "fonts/newsreader-italic-latin.woff2",

@@ -1,6 +1,8 @@
 (() => {
   const app = document.getElementById("app");
   const tree = document.getElementById("tree");
+  const rail = document.getElementById("rail");
+  const shell = document.querySelector(".shell");
   const back = document.getElementById("back");
   const STORE = "learning-hub:done";
 
@@ -134,7 +136,86 @@
     return `<a class="btn auto" href="#/lesson/${n.t.id}/${n.l.id}">${n.started ? "Continue" : "Start"}: ${esc(n.l.title)}</a>`;
   };
 
+  // Slim bar above the page on desktop (plain text, not navigation).
+  const docbar = (left, right = "") => `<div class="docbar"><span>${left}</span><span>${right}</span></div>`;
+
+  // Right rail on wide screens: the lesson's outline, its check questions, topic progress.
+  let railObserver = null;
+  function clearRail() {
+    if (railObserver) { railObserver.disconnect(); railObserver = null; }
+    rail.innerHTML = "";
+    shell.classList.remove("with-rail");
+  }
+  function renderRail(t) {
+    clearRail();
+    const article = app.querySelector("article");
+    if (!article) return;
+    const heads = [...article.querySelectorAll("h2")];
+    const checks = [...article.querySelectorAll("details.check")];
+    heads.forEach((h, i) => { h.id = `sec-${i + 1}`; });
+    const done = loadDone();
+    const n = t.lessons.filter((l) => done.has(key(t.id, l.id))).length;
+    rail.innerHTML = `
+      ${heads.length ? `<h4>On this page</h4><ul class="outline">${heads.map((h, i) =>
+        `<li><button type="button" data-sec="sec-${i + 1}">${esc(h.textContent)}</button></li>`).join("")}</ul>` : ""}
+      ${checks.length ? `<h4>Check yourself</h4><div class="qs">${checks.map((_, i) =>
+        `<button type="button" class="dot" data-q="${i}" aria-label="Question ${i + 1}">${i + 1}</button>`).join("")}</div>` : ""}
+      <p class="prog">${n} of ${t.lessons.length} lessons complete in ${esc(t.title)}</p>`;
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const go = (el) => el.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" });
+    const btns = [...rail.querySelectorAll("[data-sec]")];
+    btns.forEach((b) => { b.onclick = () => go(document.getElementById(b.dataset.sec)); });
+    rail.querySelectorAll(".dot").forEach((dot) => {
+      const d = checks[+dot.dataset.q];
+      dot.onclick = () => go(d);
+      d.addEventListener("toggle", () => { if (d.open) dot.classList.add("on"); });
+    });
+    if (btns.length) {
+      btns[0].classList.add("active");
+      if ("IntersectionObserver" in window) {
+        railObserver = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) btns.forEach((b) => b.classList.toggle("active", b.dataset.sec === e.target.id));
+          });
+        }, { rootMargin: "-10% 0px -75% 0px" });
+        heads.forEach((h) => railObserver.observe(h));
+      }
+    }
+    shell.classList.add("with-rail");
+  }
+
   // ---- views ----
+  function overview() {
+    const done = loadDone();
+    const all = topics.flatMap((t) => t.lessons.map((l) => ({ t, l, d: done.has(key(t.id, l.id)) })));
+    const left = all.filter((x) => !x.d).reduce((m, x) => m + (x.l.minutes || 0), 0);
+    const up = nextUp();
+    const rows = topics.map((t) => {
+      const n = t.lessons.filter((l) => done.has(key(t.id, l.id))).length;
+      const pct = t.lessons.length ? Math.round((n / t.lessons.length) * 100) : 0;
+      const target = t.lessons.find((l) => !done.has(key(t.id, l.id))) || t.lessons[0];
+      const href = target ? `#/lesson/${t.id}/${target.id}` : `#/topic/${t.id}`;
+      const mins = t.lessons.reduce((m, l) => m + (l.minutes || 0), 0);
+      return `<tr class="row"><td><a href="${href}"><strong>${esc(t.title)}</strong></a><small>${esc(t.summary)}</small></td>
+        <td>${n} of ${t.lessons.length}</td>
+        <td><div class="meter" role="img" aria-label="${pct}% complete"><i style="width:${pct}%"></i></div></td>
+        <td>${mins} min</td></tr>`;
+    });
+    return `<div class="overview">
+      ${up
+        ? `<div class="continue"><div><small>Up next</small><strong>${esc(up.l.title)}</strong></div>
+            <a class="btn auto" href="#/lesson/${up.t.id}/${up.l.id}">${up.started ? "Continue" : "Start"}</a></div>`
+        : `<div class="continue"><div><strong>All lessons complete</strong></div></div>`}
+      <div class="stats">
+        <div class="stat"><b>${all.filter((x) => x.d).length} of ${all.length}</b><span>lessons complete</span></div>
+        <div class="stat"><b>${left} min</b><span>of reading left</span></div>
+        <div class="stat"><b>${topics.length}</b><span>${topics.length === 1 ? "topic" : "topics"}</span></div>
+      </div>
+      <table class="topics"><thead><tr><th>Topic</th><th>Lessons</th><th>Progress</th><th>Time</th></tr></thead>
+        <tbody>${rows.join("")}</tbody></table>
+    </div>`;
+  }
+
   function home() {
     const done = loadDone();
     const rows = topics.map((t) => {
@@ -147,13 +228,18 @@
       </a>`;
     });
     app.innerHTML = `
-      <section class="hero">
+      ${docbar("<b>Overview</b>", "Learning Hub")}
+      <section class="hero phone-only">
         <h1>Learning Hub</h1>
         <p>Your personal library of lessons, built one topic at a time.</p>
         ${continueButton()}
       </section>
+      ${overview()}
       <div class="index">${rows.join("") || '<div class="empty">No topics yet.</div>'}</div>
       <p class="footer-note">Progress is saved on this device.</p>`;
+    app.querySelectorAll("tr.row").forEach((r) => {
+      r.onclick = (e) => { if (!e.target.closest("a")) r.querySelector("a").click(); };
+    });
   }
 
   function topicView(id) {
@@ -168,6 +254,7 @@
       </a>`;
     });
     app.innerHTML = `
+      ${docbar(`<b>${esc(t.title)}</b>`, `${t.lessons.length} ${t.lessons.length === 1 ? "lesson" : "lessons"}`)}
       <section class="hero">
         <h1>${esc(t.title)}</h1>
         <p>${esc(t.summary)}</p>
@@ -194,6 +281,7 @@
     const isDone = done.has(key(tid, lid));
     const next = t.lessons[idx + 1];
     app.innerHTML = `
+      ${docbar(`${esc(t.title)} / <b>${esc(lesson.title)}</b>`, `${lesson.minutes} min read`)}
       <div class="lesson-main">
         <p class="crumb"><a href="#/topic/${tid}">${esc(t.title)}</a>, lesson ${idx + 1} of ${t.lessons.length}</p>
         <article>${render(md)}</article>
@@ -204,6 +292,7 @@
             : `<a class="btn auto secondary" href="#/topic/${tid}">Back to ${esc(t.title)}</a>`}
         </div>
       </div>`;
+    renderRail(t);
     document.getElementById("done").onclick = () => {
       const s = loadDone();
       const k = key(tid, lid);
@@ -227,6 +316,7 @@
       if (view === "lesson") location.hash = `#/topic/${a}`;
       else location.hash = "#/";
     };
+    clearRail();
     if (view === "topic" || view === "lesson") expanded.add(a);
     renderTree(view === "topic" || view === "lesson" ? a : null, view === "lesson" ? b : null);
     if (view === "topic") topicView(a);
