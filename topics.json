@@ -1,0 +1,13 @@
+{
+  "topics": [
+    {
+      "id": "welcome",
+      "title": "Start here",
+      "emoji": "👋",
+      "summary": "How this library works and how to get the most out of it.",
+      "lessons": [
+        { "id": "how-this-works", "title": "How this works", "minutes": 2, "file": "how-this-works.md" }
+      ]
+    }
+  ]
+}
