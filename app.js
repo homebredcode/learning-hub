@@ -1,10 +1,11 @@
 (() => {
   const app = document.getElementById("app");
+  const tree = document.getElementById("tree");
   const back = document.getElementById("back");
-  const ring = document.getElementById("ring");
   const STORE = "learning-hub:done";
 
   let topics = [];
+  const expanded = new Set(); // topic ids open in the sidebar tree
 
   // ---- progress (saved on this device only) ----
   const loadDone = () => {
@@ -68,59 +69,72 @@
     return out.join("\n");
   }
 
-  // ---- views ----
+  // ---- shared pieces ----
   function updateRing() {
     const done = loadDone();
     const total = topics.reduce((n, t) => n + t.lessons.length, 0);
     const finished = topics.reduce((n, t) => n + t.lessons.filter((l) => done.has(key(t.id, l.id))).length, 0);
     const pct = total ? Math.round((finished / total) * 100) : 0;
-    ring.style.setProperty("--p", pct);
-    ring.innerHTML = `<span>${pct}%</span>`;
+    document.querySelectorAll(".ring").forEach((el) => {
+      el.style.setProperty("--p", pct);
+      el.innerHTML = `<span>${pct}%</span>`;
+    });
   }
 
-  // Every "?? question || answer" across all lessons, fetched once per visit.
-  let questionPool = null;
-  let homeStamp = 0;
-  async function loadQuestions() {
-    if (questionPool) return questionPool;
-    const found = [];
-    await Promise.all(topics.flatMap((t) => t.lessons.map(async (l) => {
-      try {
-        const res = await fetch(`lessons/${t.id}/${l.file}`);
-        if (!res.ok) return;
-        for (const line of (await res.text()).replace(/\r/g, "").split("\n")) {
-          if (!line.startsWith("?? ")) continue;
-          const [q, a = ""] = line.slice(3).split("||");
-          found.push({ q: q.trim(), a: a.trim(), topic: t, lesson: l });
-        }
-      } catch {}
-    })));
-    questionPool = found;
-    return found;
+  // The sidebar tree (desktop). Every destination is a row in it.
+  function renderTree(activeTopic, activeLesson, focusTopic) {
+    const done = loadDone();
+    const branches = topics.map((t) => {
+      const open = expanded.has(t.id);
+      const n = t.lessons.filter((l) => done.has(key(t.id, l.id))).length;
+      const lessons = t.lessons.map((l) => {
+        const isDone = done.has(key(t.id, l.id));
+        const current = t.id === activeTopic && l.id === activeLesson;
+        return `<li><a class="node ${current ? "current" : ""} ${isDone ? "done" : ""}" href="#/lesson/${t.id}/${l.id}"${current ? ' aria-current="page"' : ""}>
+          <span class="ico" aria-hidden="true">${isDone ? "✓" : ""}</span><span>${esc(l.title)}</span>
+          ${isDone ? '<span class="sr">(completed)</span>' : ""}</a></li>`;
+      }).join("");
+      return `<li class="branch ${open ? "open" : ""}">
+        <button class="node topic" type="button" data-topic="${t.id}" aria-expanded="${open}">
+          <span class="caret" aria-hidden="true"></span><span>${esc(t.title)}</span>
+          <span class="count">${n}/${t.lessons.length}</span>
+        </button>
+        <ul${open ? "" : " hidden"}>${lessons}</ul>
+      </li>`;
+    });
+    tree.innerHTML = `
+      <div class="tree-head"><a class="brand" href="#/">Learning Hub</a><div class="ring" aria-hidden="true"></div></div>
+      <ul class="tree-list">${branches.join("") || '<li class="empty-tree">No topics yet.</li>'}</ul>`;
+    tree.querySelectorAll("button.topic").forEach((b) => {
+      b.onclick = () => {
+        const id = b.dataset.topic;
+        expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+        renderTree(activeTopic, activeLesson, id);
+      };
+    });
+    if (focusTopic) {
+      const b = tree.querySelector(`button.topic[data-topic="${focusTopic}"]`);
+      if (b) b.focus();
+    }
   }
 
-  async function showRecall(stamp, avoid) {
-    const pool = await loadQuestions();
-    const box = document.getElementById("recall");
-    if (!box || stamp !== homeStamp || !pool.length) return;
-    const choices = pool.length > 1 ? pool.filter((x) => x.q !== avoid) : pool;
-    const pick = choices[Math.floor(Math.random() * choices.length)];
-    box.innerHTML = `
-      <h1 class="q"><span class="mark">${inline(pick.q)}</span></h1>
-      <button class="btn auto" id="reveal" aria-expanded="false" aria-controls="answer">Show answer</button>
-      <div class="a" id="answer" hidden>${inline(pick.a)}</div>
-      <p class="src">From <a href="#/lesson/${pick.topic.id}/${pick.lesson.id}">${esc(pick.lesson.title)}</a>.
-        ${pool.length > 1 ? '<button class="link-btn" id="another">Another question</button>' : ""}</p>`;
-    const reveal = document.getElementById("reveal");
-    const answer = document.getElementById("answer");
-    reveal.onclick = () => {
-      answer.hidden = false;
-      reveal.hidden = true;
-    };
-    const another = document.getElementById("another");
-    if (another) another.onclick = () => showRecall(stamp, pick.q);
+  // The first lesson not yet completed, for the "Continue" button.
+  function nextUp() {
+    const done = loadDone();
+    for (const t of topics) {
+      for (const l of t.lessons) {
+        if (!done.has(key(t.id, l.id))) return { t, l, started: done.size > 0 };
+      }
+    }
+    return null;
   }
+  const continueButton = () => {
+    const n = nextUp();
+    if (!n) return "";
+    return `<a class="btn auto" href="#/lesson/${n.t.id}/${n.l.id}">${n.started ? "Continue" : "Start"}: ${esc(n.l.title)}</a>`;
+  };
 
+  // ---- views ----
   function home() {
     const done = loadDone();
     const rows = topics.map((t) => {
@@ -133,12 +147,13 @@
       </a>`;
     });
     app.innerHTML = `
-      <section class="recall" id="recall">
-        <h1 class="empty-q">Pick a topic and start learning.</h1>
+      <section class="hero">
+        <h1>Learning Hub</h1>
+        <p>Your personal library of lessons, built one topic at a time.</p>
+        ${continueButton()}
       </section>
       <div class="index">${rows.join("") || '<div class="empty">No topics yet.</div>'}</div>
       <p class="footer-note">Progress is saved on this device.</p>`;
-    showRecall(++homeStamp);
   }
 
   function topicView(id) {
@@ -178,18 +193,15 @@
     const done = loadDone();
     const isDone = done.has(key(tid, lid));
     const next = t.lessons[idx + 1];
-    const side = t.lessons.map((l, i) => {
-      const cls = [l.id === lid ? "current" : "", done.has(key(tid, l.id)) ? "done" : ""].join(" ");
-      return `<a class="${cls}" href="#/lesson/${tid}/${l.id}"><span class="n">${done.has(key(tid, l.id)) ? "✓" : i + 1}</span>${esc(l.title)}</a>`;
-    });
     app.innerHTML = `
-      <div class="lesson-layout">
-        <aside class="lesson-side"><h4>${esc(t.title)}</h4>${side.join("")}</aside>
-        <div class="lesson-main">
-          <p class="crumb"><a href="#/topic/${tid}">${esc(t.title)}</a>, lesson ${idx + 1} of ${t.lessons.length}</p>
-          <article>${render(md)}</article>
-          <button class="btn ${isDone ? "secondary" : ""}" id="done">${isDone ? "Completed (tap to undo)" : "Mark as complete"}</button>
-          ${next ? `<a class="next" href="#/lesson/${tid}/${next.id}">Next: ${esc(next.title)}</a>` : `<a class="next" href="#/topic/${tid}">Back to ${esc(t.title)}</a>`}
+      <div class="lesson-main">
+        <p class="crumb"><a href="#/topic/${tid}">${esc(t.title)}</a>, lesson ${idx + 1} of ${t.lessons.length}</p>
+        <article>${render(md)}</article>
+        <div class="actions">
+          <button class="btn auto ${isDone ? "secondary" : ""}" id="done">${isDone ? "Completed (tap to undo)" : "Mark as complete"}</button>
+          ${next
+            ? `<a class="btn auto secondary" href="#/lesson/${tid}/${next.id}">Next lesson</a>`
+            : `<a class="btn auto secondary" href="#/topic/${tid}">Back to ${esc(t.title)}</a>`}
         </div>
       </div>`;
     document.getElementById("done").onclick = () => {
@@ -197,6 +209,7 @@
       const k = key(tid, lid);
       s.has(k) ? s.delete(k) : s.add(k);
       saveDone(s);
+      renderTree(tid, lid);
       updateRing();
       lessonView(tid, lid);
     };
@@ -214,6 +227,8 @@
       if (view === "lesson") location.hash = `#/topic/${a}`;
       else location.hash = "#/";
     };
+    if (view === "topic" || view === "lesson") expanded.add(a);
+    renderTree(view === "topic" || view === "lesson" ? a : null, view === "lesson" ? b : null);
     if (view === "topic") topicView(a);
     else if (view === "lesson") await lessonView(a, b);
     else home();

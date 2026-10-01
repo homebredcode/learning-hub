@@ -20,6 +20,7 @@
   --text: #16202e;
   --muted: #566274;
   --rule: #d3d9e1;
+  --line: #a5afbd;
   --code-bg: #e6eaf0;
   --hl: #ffd84d;
   --hl-ink: #16202e;
@@ -34,6 +35,7 @@
     --text: #e8ecf2;
     --muted: #9aa6b6;
     --rule: #2a3442;
+    --line: #435166;
     --code-bg: #1b2430;
     --good: #3ab57f;
     color-scheme: dark;
@@ -52,19 +54,13 @@ body {
 a { color: inherit; }
 main { max-width: 1080px; margin: 0 auto; padding: 8px 18px 96px; outline: none; }
 :focus-visible { outline: 3px solid var(--text); outline-offset: 3px; border-radius: 4px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* the marker: used for what to focus on (questions, current lesson, progress) */
-.mark {
-  background: var(--hl); color: var(--hl-ink);
-  -webkit-box-decoration-break: clone; box-decoration-break: clone;
-  padding: .04em .22em;
-}
-
-/* top bar */
+/* top bar (phone) */
 .topbar {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 10px;
-  padding: calc(10px + env(safe-area-inset-top)) max(18px, calc((100% - 1080px) / 2 + 18px)) 10px;
+  padding: calc(10px + env(safe-area-inset-top)) 18px 10px;
   background: var(--bg);
   border-bottom: 1px solid var(--rule);
   font-family: var(--display);
@@ -77,41 +73,32 @@ main { max-width: 1080px; margin: 0 auto; padding: 8px 18px 96px; outline: none;
 .icon-btn[hidden] { display: none; }
 .ring {
   --p: 0;
-  position: relative; display: grid; place-items: center;
+  position: relative; display: grid; place-items: center; flex: none;
   width: 38px; height: 38px; border-radius: 50%;
   background: conic-gradient(var(--hl) calc(var(--p) * 1%), var(--rule) 0);
-  font-size: .62rem; font-weight: 800;
+  font: 800 .62rem var(--display);
 }
 .ring::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--bg); }
 .ring span { position: relative; }
 
-/* home: the recall question leads */
-.recall { padding: 44px 0 8px; }
-.recall .q {
-  margin: 0 0 28px; max-width: 20ch;
-  font: 800 clamp(2rem, 7.4vw, 3.6rem)/1.32 var(--display); letter-spacing: -.03em;
-}
-.recall .a {
-  margin: 0 0 24px; padding-left: 18px; max-width: 52ch;
-  border-left: 4px solid var(--text); font-size: 1.25rem; line-height: 1.55;
-}
-.recall .src { margin: 22px 0 0; color: var(--muted); font-size: .95rem; }
-.recall .empty-q { margin: 0; max-width: 20ch; font: 800 clamp(2rem, 7.4vw, 3.6rem)/1.15 var(--display); letter-spacing: -.03em; }
-
+/* buttons: the same style everywhere */
 .btn {
   display: block; width: 100%; margin-top: 40px; padding: 15px 18px;
   border: 2px solid var(--text); border-radius: 6px;
   font: 700 1rem var(--display); color: var(--bg); background: var(--text); cursor: pointer;
+  text-decoration: none; text-align: center;
 }
 .btn.secondary { background: none; color: var(--text); }
 .btn.auto { display: inline-block; width: auto; margin: 0; padding: 12px 20px; }
-.link-btn {
-  padding: 0; border: 0; background: none; color: var(--text); cursor: pointer;
-  font: 600 .95rem var(--display); text-decoration: underline;
-  text-decoration-color: var(--hl); text-decoration-thickness: .16em; text-underline-offset: .2em;
-}
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 40px; }
+.actions .btn { flex: 1 1 220px; }
 
-/* topic index */
+/* home and topic pages */
+.hero { padding: 40px 0 8px; }
+.hero h1 { margin: 0 0 12px; font: 800 clamp(2.2rem, 8vw, 3.4rem)/1.08 var(--display); letter-spacing: -.035em; }
+.hero p { margin: 0; max-width: 46ch; color: var(--muted); font-size: 1.15rem; }
+.hero .btn.auto { margin-top: 28px; }
+
 .index { margin-top: 48px; border-top: 2px solid var(--text); }
 .topic-row {
   display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; align-items: center;
@@ -125,10 +112,6 @@ main { max-width: 1080px; margin: 0 auto; padding: 8px 18px 96px; outline: none;
 .pip.on { background: var(--hl); }
 .topic-row:hover h3 span, .topic-row:focus-visible h3 span { background: var(--hl); color: var(--hl-ink); padding: 0 .2em; margin: 0 -.2em; }
 
-/* topic page */
-.hero { padding: 40px 0 8px; }
-.hero h1 { margin: 0 0 12px; font: 800 clamp(2.2rem, 8vw, 3.4rem)/1.08 var(--display); letter-spacing: -.035em; }
-.hero p { margin: 0; max-width: 46ch; color: var(--muted); font-size: 1.15rem; }
 .list { margin-top: 36px; max-width: 720px; border-top: 2px solid var(--text); }
 .lesson-row {
   display: flex; align-items: center; gap: 16px; padding: 16px 0;
@@ -144,8 +127,10 @@ main { max-width: 1080px; margin: 0 auto; padding: 8px 18px 96px; outline: none;
 .lesson-row:hover .t span, .lesson-row:focus-visible .t span { background: var(--hl); color: var(--hl-ink); padding: 0 .2em; margin: 0 -.2em; }
 
 .empty { padding: 36px 0; color: var(--muted); border-top: 2px solid var(--text); }
+.footer-note { margin-top: 56px; color: var(--muted); font-size: .9rem; }
 
 /* lesson reading */
+.lesson-main { max-width: 720px; }
 .crumb { margin: 24px 0 0; color: var(--muted); font: 500 .9rem var(--display); }
 .crumb a { text-decoration-color: var(--hl); text-decoration-thickness: .14em; text-underline-offset: .2em; }
 article h1 { margin: 10px 0 22px; font: 800 clamp(2rem, 7vw, 3rem)/1.1 var(--display); letter-spacing: -.035em; }
@@ -169,32 +154,53 @@ details.check summary::after { content: "Tap to answer"; display: block; margin-
 details.check[open] summary::after { content: none; }
 details.check .answer { margin-top: 12px; padding-left: 16px; border-left: 4px solid var(--text); }
 
-.next { display: inline-block; margin-top: 22px; font: 650 1rem var(--display); text-decoration: underline; text-decoration-color: var(--hl); text-decoration-thickness: .16em; text-underline-offset: .2em; }
-.footer-note { margin-top: 56px; color: var(--muted); font-size: .9rem; }
-
-/* lesson layout: reading column, plus a lesson list beside it on wide screens */
-.lesson-layout { display: block; }
-.lesson-side { display: none; }
-.lesson-main { max-width: 720px; }
+/* sidebar tree: desktop only */
+.shell { display: block; }
+#tree { display: none; }
 
 @media (min-width: 760px) {
   body { font-size: 20px; }
   main { padding-top: 16px; }
-  .recall { padding-top: 64px; }
   .hero { padding-top: 56px; }
 }
 
 @media (min-width: 1040px) {
-  .lesson-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 64px; align-items: start; }
-  .lesson-side { display: block; position: sticky; top: 88px; }
-  .lesson-side h4 { margin: 0 0 12px; font: 800 1rem/1.3 var(--display); letter-spacing: -.01em; }
-  .lesson-side a {
-    display: flex; gap: 10px; align-items: baseline; padding: 8px 10px; margin: 2px 0;
-    border-radius: 4px; text-decoration: none; color: var(--muted); font: 500 .95rem/1.35 var(--display);
+  .topbar { display: none; }
+  .shell { display: grid; grid-template-columns: 300px minmax(0, 1fr); max-width: 1280px; margin: 0 auto; }
+  main { max-width: 860px; margin: 0; padding: 24px 56px 96px; }
+  .crumb, .index { display: none; }
+  .lesson-main > article h1:first-child { margin-top: 28px; }
+
+  #tree {
+    display: block; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: 22px 14px 40px 18px; border-right: 1px solid var(--rule); font-family: var(--display);
   }
-  .lesson-side a:hover { color: var(--text); text-decoration: underline; text-decoration-color: var(--hl); text-decoration-thickness: .16em; text-underline-offset: .2em; }
-  .lesson-side a.current { background: var(--hl); color: var(--hl-ink); font-weight: 700; }
-  .lesson-side a .n { flex: none; width: 1.3em; font-weight: 800; }
-  .lesson-side a.done .n { color: var(--good); }
-  .lesson-side a.current.done .n { color: var(--hl-ink); }
+  .tree-head { display: flex; align-items: center; gap: 10px; padding: 0 10px 18px; }
+  .tree-list, .tree-list ul { margin: 0; padding: 0; list-style: none; }
+  .node {
+    display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px;
+    border: 0; border-radius: 4px; background: none; color: var(--text);
+    font: 500 .95rem/1.35 var(--display); text-align: left; text-decoration: none; cursor: pointer;
+  }
+  .node:hover span:not(.ico):not(.count):not(.caret):not(.sr) {
+    text-decoration: underline; text-decoration-color: var(--hl); text-decoration-thickness: .16em; text-underline-offset: .2em;
+  }
+  .node.topic { font-weight: 700; font-size: 1rem; }
+  .node.current { background: var(--hl); color: var(--hl-ink); font-weight: 700; }
+  .node.current:hover span { text-decoration: none; }
+  .caret {
+    flex: none; width: 0; height: 0;
+    border-left: 6px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+  }
+  .branch.open > .topic .caret { transform: rotate(90deg); }
+  .count { margin-left: auto; color: var(--muted); font-size: .8rem; font-weight: 500; }
+  .ico { flex: none; width: 1em; color: var(--good); font-weight: 800; }
+  .node.current .ico { color: var(--hl-ink); }
+
+  /* connector lines: a trunk down the left with a branch into each lesson */
+  .tree-list ul { margin-left: 16px; }
+  .tree-list ul > li { position: relative; padding-left: 18px; }
+  .tree-list ul > li::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-left: 2px solid var(--line); }
+  .tree-list ul > li:last-child::before { bottom: 50%; }
+  .tree-list ul > li::after { content: ""; position: absolute; left: 0; top: 50%; width: 14px; border-top: 2px solid var(--line); }
 }
