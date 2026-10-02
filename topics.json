@@ -6,7 +6,44 @@
       "emoji": "👋",
       "summary": "How this library works and how to get the most out of it.",
       "lessons": [
-        { "id": "how-this-works", "title": "How this works", "minutes": 2, "file": "how-this-works.md" }
+        {
+          "id": "how-this-works",
+          "title": "How this works",
+          "minutes": 2,
+          "file": "how-this-works.md"
+        }
+      ]
+    },
+    {
+      "id": "electricity",
+      "title": "Electricity & circuits",
+      "emoji": "⚡",
+      "summary": "Voltage, current and resistance, series and parallel, how motors spin, and why voltage sags.",
+      "lessons": [
+        {
+          "id": "ohms-law-series-parallel",
+          "title": "Ohm's Law, series and parallel",
+          "minutes": 6,
+          "file": "ohms-law-series-parallel.md"
+        },
+        {
+          "id": "voltage-division",
+          "title": "Voltage division",
+          "minutes": 5,
+          "file": "voltage-division.md"
+        },
+        {
+          "id": "motors-and-the-commutator",
+          "title": "Motors and the commutator",
+          "minutes": 6,
+          "file": "motors-and-the-commutator.md"
+        },
+        {
+          "id": "ground-and-voltage-drop",
+          "title": "Ground and voltage drop",
+          "minutes": 5,
+          "file": "ground-and-voltage-drop.md"
+        }
       ]
     }
   ]

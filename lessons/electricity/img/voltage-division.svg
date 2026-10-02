@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" font-family="Segoe UI, system-ui, sans-serif">
+  <rect width="760" height="320" rx="8" fill="#f2f4f7"/>
+  <!-- circuit loop -->
+  <g fill="none" stroke="#16202e" stroke-width="3" stroke-linejoin="round">
+    <path d="M60 70 H150 M220 70 H260 M330 70 H350 V260 H60 V176 M60 150 V70"/>
+    <path d="M40 150 H80 M50 176 H70" stroke-width="4"/>
+    <rect x="150" y="56" width="70" height="28" fill="#ffd84d"/>
+    <rect x="260" y="56" width="70" height="28" fill="#ffd84d"/>
+  </g>
+  <text x="90" y="168" font-size="14" fill="#16202e">12 V</text>
+  <text x="152" y="46" font-size="14" font-weight="700" fill="#16202e">R1 = 4 Ω</text>
+  <text x="262" y="46" font-size="14" font-weight="700" fill="#16202e">R2 = 8 Ω</text>
+  <text x="120" y="190" font-size="14" fill="#566274">Same current (1 A)</text>
+  <text x="120" y="210" font-size="14" fill="#566274">through everything.</text>
+  <path d="M200 260 l-14 -8 v16 z" fill="#16202e"/>
+  <!-- pressure staircase -->
+  <text x="390" y="28" font-size="15" font-weight="700" fill="#16202e">Pressure left along the loop</text>
+  <path d="M390 56 H480 V120 H570 V250 H660" fill="none" stroke="#1e8e5a" stroke-width="4"/>
+  <path d="M390 56 V250" stroke="#a5afbd" stroke-width="2" stroke-dasharray="4 4"/>
+  <g font-size="14" fill="#16202e">
+    <text x="394" y="76">12 V</text>
+    <text x="484" y="112">8 V left (R1 used 4 V)</text>
+    <text x="574" y="240">0 V left (R2 used 8 V)</text>
+  </g>
+  <text x="390" y="290" font-size="14" fill="#566274">Bigger resistor = bigger share of the pressure.</text>
+</svg>

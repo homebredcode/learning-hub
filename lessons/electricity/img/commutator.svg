@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="Segoe UI, system-ui, sans-serif">
+  <rect width="640" height="320" rx="8" fill="#f2f4f7"/>
+  <g id="panel" text-anchor="middle">
+    <text x="160" y="28" font-size="15" font-weight="700" fill="#16202e">Start</text>
+    <text x="480" y="28" font-size="15" font-weight="700" fill="#16202e">Half a turn later</text>
+  </g>
+  <!-- ===== LEFT: start ===== -->
+  <!-- split ring: top half = A (red), bottom half = B (blue) -->
+  <path d="M110 170 A50 50 0 0 1 210 170 Z" fill="#e8a39a" stroke="#16202e" stroke-width="3"/>
+  <path d="M110 170 A50 50 0 0 0 210 170 Z" fill="#9db8e0" stroke="#16202e" stroke-width="3"/>
+  <circle cx="160" cy="120" r="0"/>
+  <!-- brushes (fixed) -->
+  <rect x="148" y="98" width="24" height="22" fill="#16202e"/>
+  <rect x="148" y="220" width="24" height="22" fill="#16202e"/>
+  <text x="160" y="90" text-anchor="middle" font-size="14" fill="#16202e" font-weight="700">+ brush</text>
+  <text x="160" y="262" text-anchor="middle" font-size="14" fill="#16202e" font-weight="700">− brush</text>
+  <text x="160" y="150" text-anchor="middle" font-size="14" fill="#16202e">A</text>
+  <text x="160" y="198" text-anchor="middle" font-size="14" fill="#16202e">B</text>
+  <!-- ===== RIGHT: half turn ===== -->
+  <path d="M430 170 A50 50 0 0 1 530 170 Z" fill="#9db8e0" stroke="#16202e" stroke-width="3"/>
+  <path d="M430 170 A50 50 0 0 0 530 170 Z" fill="#e8a39a" stroke="#16202e" stroke-width="3"/>
+  <rect x="468" y="98" width="24" height="22" fill="#16202e"/>
+  <rect x="468" y="220" width="24" height="22" fill="#16202e"/>
+  <text x="480" y="90" text-anchor="middle" font-size="14" fill="#16202e" font-weight="700">+ brush</text>
+  <text x="480" y="262" text-anchor="middle" font-size="14" fill="#16202e" font-weight="700">− brush</text>
+  <text x="480" y="150" text-anchor="middle" font-size="14" fill="#16202e">B</text>
+  <text x="480" y="198" text-anchor="middle" font-size="14" fill="#16202e">A</text>
+  <!-- arrow between -->
+  <path d="M265 170 H375" stroke="#16202e" stroke-width="3" fill="none"/>
+  <path d="M375 170 l-12 -8 v16 z" fill="#16202e"/>
+  <text x="320" y="156" text-anchor="middle" font-size="13" fill="#566274">ring spins</text>
+  <text x="320" y="196" text-anchor="middle" font-size="13" fill="#566274">brushes stay put</text>
+  <text x="320" y="300" text-anchor="middle" font-size="14" fill="#16202e">Coil end A got + first, then − . Its current flips, so the push stays the same way.</text>
+</svg>
